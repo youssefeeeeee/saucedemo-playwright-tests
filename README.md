@@ -6,12 +6,23 @@ This is a learning project. The site is a public demo built for testing practice
 
 ## What is tested
 
-| Test | What it checks |
-|---|---|
-| Standard user can log in | A valid user logs in and lands on the products page |
-| Locked out user sees an error | A locked-out user cannot log in and sees an error message |
+| File | Tests | What it checks |
+|---|---|---|
+| `tests/smoke.spec.js` | 3 | Standard user can log in, locked-out user sees an error, inventory shows 6 products |
+| `tests/login.spec.js` | 6 | Successful login, error messages (wrong password, empty username, empty password, locked-out user), logout |
+| `tests/cart.spec.js` | 6 | Add one or several items, remove from the products page and the cart page, cart page lists the item, continue shopping |
+| `tests/checkout.spec.js` | 8 | Information form, validation errors (first name, last name, postal code), overview totals, full purchase, cancel on both steps |
+| `tests/sort.spec.js` | 4 | Sort by price low to high and high to low, cheapest and most expensive item positions, all products stay listed |
 
-Tests are in `tests/smoke.spec.js` and run in Chromium, Firefox and WebKit (see `playwright.config.js`).
+Tests run in Chromium, Firefox and WebKit (see `playwright.config.js`).
+
+### How the tests are written
+
+- Each file logs in (or opens the login page) in a `beforeEach` hook, so tests start from a known state.
+- Repeated steps live in small helper functions such as `login`, `goToCheckoutInfo` and `fillInfo`.
+- Elements are found with `data-test` attributes or roles, and each locator targets a single element. This avoids Playwright strict mode errors when a locator matches several elements (for example, the six "Add to cart" buttons).
+- The cart badge disappears when the cart is empty, so tests check `toHaveCount(0)` instead of looking for a "0".
+- Login error cases are data-driven: one list of cases generates one test each.
 
 ## Requirements
 
@@ -38,6 +49,9 @@ npx playwright install
 # Run all tests in all browsers
 npx playwright test
 
+# Run one file
+npx playwright test tests/checkout.spec.js
+
 # Run in one browser only
 npx playwright test --project=chromium
 
@@ -52,17 +66,22 @@ npx playwright show-report
 
 ```
 saucedemo-playwright-tests/
-├── tests/                  # Test files
-│   └── smoke.spec.js       # Login smoke tests
-├── playwright.config.js    # Playwright settings (browsers, reports)
-├── package.json            # Dependencies
-└── .gitignore              # Files kept out of the repository
+├── tests/                   # Test files
+│   ├── smoke.spec.js        # Quick login and inventory checks
+│   ├── login.spec.js        # Login success, errors and logout
+│   ├── cart.spec.js         # Add and remove items
+│   ├── checkout.spec.js     # Checkout flow and validation
+│   └── sort.spec.js         # Product sorting by price
+├── playwright.config.js     # Playwright settings (browsers, reports)
+├── package.json             # Dependencies
+└── .gitignore               # Files kept out of the repository
 ```
 
 ## Roadmap
 
-- [ ] More login cases (wrong password, empty fields)
-- [ ] Add to cart and checkout tests
+- [x] More login cases (wrong password, empty fields)
+- [x] Add to cart and checkout tests
+- [x] Sorting tests
 - [ ] Page Object pattern to reduce repeated code
 - [ ] Run the tests automatically with GitHub Actions
 - [ ] API tests
