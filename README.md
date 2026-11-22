@@ -18,8 +18,8 @@ Tests run in Chromium, Firefox and WebKit (see `playwright.config.js`).
 
 ### How the tests are written
 
-- Each file logs in (or opens the login page) in a `beforeEach` hook, so tests start from a known state.
-- Repeated steps live in small helper functions such as `login`, `goToCheckoutInfo` and `fillInfo`.
+- The tests use the **Page Object pattern**: each page of the shop has a class in `pages/` that holds its locators and actions (`LoginPage`, `InventoryPage`, `CartPage`, `CheckoutPage`). Tests call methods like `inventory.addToCart('sauce-labs-backpack')` and only contain the checks.
+- Each file logs in in a `beforeEach` hook, so tests start from a known state.
 - Elements are found with `data-test` attributes or roles, and each locator targets a single element. This avoids Playwright strict mode errors when a locator matches several elements (for example, the six "Add to cart" buttons).
 - The cart badge disappears when the cart is empty, so tests check `toHaveCount(0)` instead of looking for a "0".
 - Login error cases are data-driven: one list of cases generates one test each.
@@ -66,6 +66,11 @@ npx playwright show-report
 
 ```
 saucedemo-playwright-tests/
+├── pages/                   # Page objects (locators and actions per page)
+│   ├── LoginPage.js
+│   ├── InventoryPage.js
+│   ├── CartPage.js
+│   └── CheckoutPage.js
 ├── tests/                   # Test files
 │   ├── smoke.spec.js        # Quick login and inventory checks
 │   ├── login.spec.js        # Login success, errors and logout
@@ -82,6 +87,6 @@ saucedemo-playwright-tests/
 - [x] More login cases (wrong password, empty fields)
 - [x] Add to cart and checkout tests
 - [x] Sorting tests
-- [ ] Page Object pattern to reduce repeated code
+- [x] Page Object pattern to reduce repeated code
 - [ ] Run the tests automatically with GitHub Actions
 - [ ] API tests

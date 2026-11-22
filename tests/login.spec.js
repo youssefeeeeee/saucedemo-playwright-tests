@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage';
+import { InventoryPage } from '../pages/InventoryPage';
 
 const loginErrors = [
     { name: 'wrong password', username: 'standard_user', password: 'wrong pass', message: 'do not match' },
@@ -7,34 +9,32 @@ const loginErrors = [
     { name: 'locked out user', username: 'locked_out_user', password: 'secret_sauce', message: 'locked out' },
 ];
 
-async function login(page, username, password) {
-    await page.getByPlaceholder('Username').fill(username);
-    await page.getByPlaceholder('Password').fill(password);
-    await page.getByRole('button', { name: 'Login' }).click();
-}
+let loginPage;
 
 test.beforeEach(async ({ page }) => {
-    await page.goto('https://www.saucedemo.com/');
+    loginPage = new LoginPage(page);
+    await loginPage.goto();
 });
 
 test('standard user can log in', async ({ page }) => {
-    await login(page, 'standard_user', 'secret_sauce');
+    const inventory = new InventoryPage(page);
+    await loginPage.login('standard_user');
     await expect(page).toHaveURL(/inventory/);
-    await expect(page.locator('[data-test="title"]')).toHaveText('Products');
+    await expect(inventory.title).toHaveText('Products');
 });
 
 for (const c of loginErrors) {
     test(`login error: ${c.name}`, async ({ page }) => {
-        await login(page, c.username, c.password);
-        await expect(page.locator('[data-test="error"]')).toContainText(c.message);
+        await loginPage.login(c.username, c.password);
+        await expect(loginPage.error).toContainText(c.message);
         await expect(page).not.toHaveURL(/inventory/);
     });
 }
 
 test('user can log out', async ({ page }) => {
-    await login(page, 'standard_user', 'secret_sauce');
-    await page.getByRole('button', { name: 'Open Menu' }).click();
-    await page.locator('[data-test="logout-sidebar-link"]').click();
+    const inventory = new InventoryPage(page);
+    await loginPage.login('standard_user');
+    await inventory.logout();
     await expect(page).toHaveURL('https://www.saucedemo.com/');
-    await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
+    await expect(loginPage.loginButton).toBeVisible();
 });
